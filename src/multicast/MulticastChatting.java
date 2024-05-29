@@ -81,18 +81,18 @@ public class MulticastChatting extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == sendButton) {
+        if (e.getSource() == sendButton) { // When the send button is clicked
             String message = messageField.getText().trim();
             if (!message.isEmpty()) {
-                sendMessage("MSG:" + username + ": " + message);
-                messageField.setText("");
+                sendMessage("MSG:" + username + ": " + message);// Send the message
+                messageField.setText("");// Clear the message field
             }
-        } else if (e.getSource() == logOffButton) {
-            sendMessage("LEAVE:" + username);
+        } else if (e.getSource() == logOffButton) { // When the log off button is clicked
+            sendMessage("LEAVE:" + username);// Send leave message
             try {
-                socket.leaveGroup(group);
-                socket.close();
-                dispose();
+                socket.leaveGroup(group); // Leave the multicast group
+                socket.close();// Close the socket
+                dispose();// Close the GUI
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -101,9 +101,9 @@ public class MulticastChatting extends JFrame implements ActionListener {
 
     private void sendMessage(String message) {
         try {
-            byte[] buffer = message.getBytes();
+            byte[] buffer = message.getBytes();// Convert message to bytes
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, port);
-            socket.send(packet);
+            socket.send(packet);// Send the packet
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -113,41 +113,42 @@ public class MulticastChatting extends JFrame implements ActionListener {
         @Override
         public void run() {
             try {
-                byte[] buffer = new byte[1024];
+                byte[] buffer = new byte[1024];// Buffer for incoming messages
                 while (true) {
-                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                    socket.receive(packet);
-                    String message = new String(packet.getData(), 0, packet.getLength());
-                    SwingUtilities.invokeLater(() -> handleReceivedMessage(message));
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);// Packet to receive data
+                    socket.receive(packet); // Receive the packet
+                    String message = new String(packet.getData(), 0, packet.getLength()); // Convert packet to string
+                    SwingUtilities.invokeLater(() -> handleReceivedMessage(message));// Handle the message in the GUI thread
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
+            //this part handles online members list, who is online, who loggs off
         private void handleReceivedMessage(String message) {
             if (message.startsWith("JOIN:")) {
-                String newUser = message.substring(5);
-                if (onlineMembers.add(newUser)) {
-                    listModel.addElement(newUser);
-                    messageArea.append(newUser + " joined the chat.\n");
+                String newUser = message.substring(5);// Extract the new user's name
+                if (onlineMembers.add(newUser)) {// Add to the online members set
+                    listModel.addElement(newUser);// Add to the GUI list
+                    messageArea.append(newUser + " joined the chat.\n");// Display message
                     // Send current online members to the new user
                     sendMessage("MEMBERS:" + String.join(",", onlineMembers));
                 }
             } else if (message.startsWith("LEAVE:")) {
-                String leavingUser = message.substring(6);
-                if (onlineMembers.remove(leavingUser)) {
-                    listModel.removeElement(leavingUser);
-                    messageArea.append(leavingUser + " left the chat.\n");
+                String leavingUser = message.substring(6);// Extract the leaving user's name
+                if (onlineMembers.remove(leavingUser)) {// Remove from the online members set
+                    listModel.removeElement(leavingUser);// Remove from the GUI list
+                    messageArea.append(leavingUser + " left the chat.\n"); // Display message
                 }
             } else if (message.startsWith("MSG:")) {
-                String chatMessage = message.substring(4);
-                messageArea.append(chatMessage + "\n");
-            } else if (message.startsWith("MEMBERS:")) {
-                String[] members = message.substring(8).split(",");
+                String chatMessage = message.substring(4);// Extract the chat message
+                messageArea.append(chatMessage + "\n");// Display the chat message
+            } else if (message.startsWith("MEMBERS:")) {// Extract the list of members
+                String[] members = message.substring(8).split(",");// Extract the list of members
                 for (String member : members) {
-                    if (onlineMembers.add(member)) {
-                        listModel.addElement(member);
+                    if (onlineMembers.add(member)) { // Add to the online members set
+                        listModel.addElement(member);// Add to the GUI list
                     }
                 }
             }
